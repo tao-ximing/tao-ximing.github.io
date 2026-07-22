@@ -32,6 +32,7 @@ import {
 import "./styles.css";
 
 const email = "directortao@gmail.com";
+const githubUrl = "https://github.com/ttm43";
 const assetBase = import.meta.env.BASE_URL;
 
 const projects = [
@@ -40,7 +41,8 @@ const projects = [
     title: "Sales Order Automation",
     subtitle: "Email, PDF, and Excel orders into AX-ready workflow outputs.",
     tags: ["AI Agent", "Automation", "Document AI", "Human Review"],
-    outcome: "70% automation for verified orders. 2h saved per user per day.",
+    outcome:
+      "95% extraction accuracy. 70% of eligible orders fully automated. 2h saved per user per day.",
     href: "#/projects/orderops",
     status: "Playable case study",
   },
@@ -51,7 +53,7 @@ const projects = [
     tags: ["RAG", "Source Grounding", "Evaluation"],
     outcome: "Verified answer records, confidence gates, and human fallback.",
     href: "#/projects/knowledgeguard",
-    status: "Coming next",
+    status: "Interactive pipeline",
   },
   {
     id: "clinic",
@@ -235,11 +237,28 @@ function App() {
           slug !== "projects/orderops" &&
           slug !== "projects/knowledgeguard" &&
           slug !== "projects/docparse" &&
-          slug !== "projects/clinicflow" && (
-          <PlaceholderPage slug={slug.split("/").pop()} />
-        )}
+          slug !== "projects/clinicflow" && <PlaceholderPage />}
       </main>
+      <SiteFooter />
     </div>
+  );
+}
+
+function SiteFooter() {
+  return (
+    <footer className="site-footer">
+      <div className="footer-identity">
+        <strong>Ximing Tao</strong>
+        <span>AI Engineer / Melbourne, Australia</span>
+      </div>
+      <nav className="footer-links" aria-label="Contact links">
+        <a href={`mailto:${email}`}>{email}</a>
+        <a href={githubUrl} target="_blank" rel="noreferrer">
+          GitHub
+        </a>
+        <a href="#/resume">Resume</a>
+      </nav>
+    </footer>
   );
 }
 
@@ -299,6 +318,20 @@ function HomePage() {
             </article>
           ))}
         </div>
+      </section>
+
+      <section className="section contact-cta">
+        <div>
+          <h2>Want to see how I would approach your problem?</h2>
+          <p>
+            I am happy to walk through any of these systems live, or sketch how the same
+            patterns apply to your workflow.
+          </p>
+        </div>
+        <a className="cta-button" href={`mailto:${email}`}>
+          <Mail size={16} />
+          {email}
+        </a>
       </section>
     </>
   );
@@ -441,6 +474,7 @@ function AutomationSandbox() {
         human: { x: 872, y: 244 },
       };
   const [flights, setFlights] = useState([]);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const [processed, setProcessed] = useState({
     pdf: false,
     excel: false,
@@ -489,6 +523,7 @@ function AutomationSandbox() {
   }
 
   function launchAttachment(kind) {
+    setHasInteracted(true);
     const route = {
       pdf: {
         to: flightPoint(nodePositions.extractionAgent),
@@ -573,6 +608,7 @@ function AutomationSandbox() {
           icon={<FileText size={20} />}
           position={attachmentPositions.pdf}
           onHold={launchAttachment}
+          hint={!hasInteracted}
         />
         <FixedAttachment
           kind="excel"
@@ -580,6 +616,7 @@ function AutomationSandbox() {
           icon={<FileSpreadsheet size={20} />}
           position={attachmentPositions.excel}
           onHold={launchAttachment}
+          hint={!hasInteracted}
         />
 
         {flights.map((flight) => (
@@ -646,7 +683,8 @@ function OrderOpsFlowLines({ processed }) {
 
 function ImpactStrip() {
   const impact = [
-    { value: "70%", label: "eligible order automation" },
+    { value: "95%", label: "field extraction accuracy" },
+    { value: "70%", label: "eligible orders fully automated" },
     { value: "2h", label: "saved per support user/day" },
     { value: "20", label: "support users in workflow" },
   ];
@@ -663,17 +701,19 @@ function ImpactStrip() {
   );
 }
 
-function FixedAttachment({ kind, label, icon, position, onHold }) {
+function FixedAttachment({ kind, label, icon, position, onHold, hint }) {
   const holdProps = useLongPress(() => onHold(kind));
 
   return (
     <div
-      className={`attachment fixed-attachment ${kind}`}
+      className={`attachment fixed-attachment ${kind} ${hint ? "hinting" : ""}`}
       style={{ left: position.x, top: position.y }}
       {...holdProps}
     >
+      {hint && <span className="hold-pulse" aria-hidden="true" />}
       {icon}
       <strong>{label}</strong>
+      {hint && kind === "pdf" && <span className="hold-hint">Hold me</span>}
     </div>
   );
 }
@@ -1491,18 +1531,14 @@ function ClinicFlowPage() {
   );
 }
 
-function PlaceholderPage({ slug }) {
-  const titleMap = {
-    docparse: "DocParse Engine",
-    clinicflow: "ClinicFlow",
-  };
+function PlaceholderPage() {
   return (
     <section className="placeholder-page">
       <div className="grid-bg" />
-      <h1>{titleMap[slug] || "Project"}</h1>
+      <h1>Case study in progress</h1>
       <p>
-        This page intentionally keeps the same visual system as the homepage. Content will be
-        designed after the homepage, OrderOps AI Sandbox, and resume are approved.
+        This write-up is not published yet. I am happy to walk through it live — reach out
+        at <a href={`mailto:${email}`}>{email}</a>.
       </p>
       <a href="#/">Back to home</a>
     </section>
