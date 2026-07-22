@@ -134,25 +134,35 @@ const capabilityColumns = [
 
 const resume = {
   summary:
-    "AI Engineer with around five years of experience building applied AI systems across workflow automation, document intelligence, RAG, structured extraction, LLM evaluation, and business process automation.",
+    "Production-focused AI Engineer with 5 years of experience designing and shipping applied AI systems across agentic workflow automation, retrieval, document intelligence, structured extraction, and LLM evaluation. Experienced in running discovery with non-technical stakeholders, reframing ambiguous business processes into well-scoped problems, and building reliable systems that combine AI capabilities with deterministic validation and human review.",
   experience: [
     {
-      role: "AI & Automation Engineer",
+      role: "AI Automation Consultant (project-based re-engagement)",
       org: "Xperience, Melbourne",
-      time: "Oct 2025 - May 2026",
+      time: "Jun 2026 - Present",
       bullets: [
-        "Led a sales order automation workflow that extracted customer orders from email attachments and processed validated outputs into AX.",
-        "Reached around 70% fully automated processing for eligible orders, saving Sales Support users around two hours per day.",
-        "Separated AI extraction from deterministic validation, approval, export, SFTP handoff, and email dispatch.",
+        "Supporting, hardening, and extending the production sales order automation platform, maintaining version-tracked prompt histories and failure-case analysis across releases.",
       ],
     },
     {
-      role: "AI Engineer",
-      org: "Freelance",
-      time: "Mar 2025 - Sep 2025; May 2026 - Present",
+      role: "AI Automation Engineer",
+      org: "Xperience, Melbourne",
+      time: "Oct 2025 - May 2026",
       bullets: [
-        "Built AI-assisted automation systems for scheduling, medical practice communication, clinical assessment workflows, and patient-facing reports.",
-        "Reduced AI processing cost by over 80% in a document intelligence SaaS workflow through routing and prompt control.",
+        "Architected and delivered a production sales-order automation platform for a national wholesale distributor using C#/.NET, Power Automate, Azure Container Apps, Service Bus, PostgreSQL, SharePoint, and SFTP integrations, automating around 70% of eligible orders and saving approximately two hours per Sales Support user per day.",
+        "Ran discovery directly with non-technical operations and technology stakeholders to reframe ambiguous order handling processes into well-scoped automation problems and deliver the platform through UAT and production rollout.",
+        "Designed a hybrid AI-deterministic architecture: an isolated LLM service handled order classification, ambiguous Excel cases, master-data candidate ranking, exception summaries, and clarification drafts, while validation, approvals, Zendesk routing, CSV generation, and SFTP delivery remained deterministic against versioned PostgreSQL master data.",
+        "Built backend services and deterministic worker pipelines for Microsoft Graph email ingestion, PDF extraction with Azure Document Intelligence, parsing across eight Excel templates, order JSON normalisation, and CSV export for Dynamics AX.",
+      ],
+    },
+    {
+      role: "Independent AI Engineer",
+      org: "Freelance",
+      time: "Mar 2025 - Sep 2025",
+      bullets: [
+        "Extended a startup client's SaaS MVP with finance-domain RAG, confidence-based model escalation, and structured document extraction; a locally hosted small-model classifier routed queries across dedicated analysis paths, reducing AI processing cost by over 80%.",
+        "Built an evaluation system to tune the pipeline empirically, comparing classifier model selection, prompt versions, chunking strategies, and reranker settings against answer quality, cost, and failure-case metrics.",
+        "Built and deployed a self-hosted automation assistant (n8n, PostgreSQL) for a practising doctor, integrating calendar, messaging, and LLM-based analysis of consultation recordings; reduced missed patient responses from 5-8 per day to under 2, with the workflow in continuous daily use.",
       ],
     },
     {
@@ -186,20 +196,34 @@ const resume = {
   ],
   skills: [
     "Python",
+    "C#",
     "TypeScript",
-    "React",
-    "PostgreSQL",
+    "SQL",
     "RAG",
+    "LLM Evaluation",
+    "Agent Orchestration",
+    "MCP",
     "LangChain",
     "LangSmith",
     "ChromaDB",
+    "FastAPI",
+    "Django",
+    ".NET",
+    "React",
+    "Next.js",
+    "PostgreSQL",
     "OCR",
     "PaddleOCR",
     "OpenCV",
+    "Azure AI Document Intelligence",
     "AWS Textract",
     "Azure OpenAI",
     "Azure Container Apps",
+    "Azure Service Bus",
+    "AWS Bedrock",
     "Docker",
+    "Power Automate",
+    "n8n",
   ],
 };
 
