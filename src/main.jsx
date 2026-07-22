@@ -1555,10 +1555,10 @@ function ResumePage() {
         </div>
         <div className="resume-actions">
           <a href={`mailto:${email}`}>{email}</a>
-          <button onClick={() => window.print()}>
+          <a href={`${assetBase}XimingTao_resume.pdf`} download="XimingTao_resume.pdf">
             <ArrowDownToLine size={16} />
-            Print / Save PDF
-          </button>
+            Download PDF
+          </a>
         </div>
       </div>
 
