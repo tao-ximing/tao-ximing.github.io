@@ -29,6 +29,7 @@ import {
   UserCheck,
   XCircle,
 } from "lucide-react";
+import PipelineInspector from "./orderops/PipelineInspector.jsx";
 import "./styles.css";
 
 const email = "directortao@gmail.com";
@@ -472,7 +473,12 @@ function BlankProjectVisual() {
 }
 
 function OrderOpsPage() {
-  return <AutomationSandbox />;
+  return (
+    <>
+      <AutomationSandbox />
+      <PipelineInspector />
+    </>
+  );
 }
 
 function AutomationSandbox() {
