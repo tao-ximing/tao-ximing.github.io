@@ -3432,12 +3432,99 @@ button {
   line-height: 1.55;
 }
 
-.case-picker {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+.case-picker-zones {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   margin-bottom: 18px;
 }
+
+.picker-zone {
+  padding: 10px 12px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.picker-zone-split {
+  display: grid;
+  grid-template-columns: minmax(0, 2.55fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.zone-pdf {
+  border-color: rgba(105, 92, 255, 0.35);
+  background: rgba(105, 92, 255, 0.04);
+}
+
+.zone-excel {
+  border-color: rgba(15, 118, 110, 0.32);
+  background: rgba(15, 118, 110, 0.04);
+}
+
+.zone-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.zone-head strong {
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 780;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.zone-pdf .zone-head strong { color: var(--violet); }
+.zone-excel .zone-head strong { color: var(--teal); }
+
+.zone-head span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.zone-cards {
+  display: grid;
+  gap: 10px;
+}
+
+.zone-pdf .zone-cards {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+.zone-excel .zone-cards {
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+
+.zone-entry .zone-cards {
+  grid-template-columns: minmax(0, 420px);
+}
+
+.zone-entry .case-card {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.zone-entry .case-thumb {
+  flex-shrink: 0;
+  width: 64px;
+}
+
+.zone-entry .case-card strong,
+.zone-entry .case-card .case-customer {
+  display: block;
+}
+
+.zone-entry .case-card .case-badge {
+  margin-left: auto;
+}
+
+.zone-pdf .case-thumb { background: rgba(105, 92, 255, 0.07); }
+.zone-excel .case-thumb { background: rgba(15, 118, 110, 0.07); }
 
 .case-card {
   display: flex;
@@ -3614,6 +3701,166 @@ button {
   flex-direction: column;
   gap: 10px;
   min-width: 0;
+}
+
+.lane-band {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+
+.lane-band.active-pdf,
+.lane-connect.active-pdf {
+  grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr);
+}
+
+.lane-band.active-excel,
+.lane-connect.active-excel {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2.4fr);
+}
+
+.lane-container {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px;
+}
+
+.lane-container.lane-pdf {
+  border-color: rgba(105, 92, 255, 0.35);
+  background: rgba(105, 92, 255, 0.04);
+}
+
+.lane-container.lane-excel {
+  border-color: rgba(15, 118, 110, 0.32);
+  background: rgba(15, 118, 110, 0.04);
+}
+
+.lane-container.ghost {
+  border-style: dashed;
+  background: transparent;
+  opacity: 0.68;
+}
+
+.lane-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 2px 4px 10px;
+}
+
+.lane-head strong {
+  font-size: 10.5px;
+  font-weight: 780;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.lane-pdf .lane-head strong { color: var(--violet); }
+.lane-excel .lane-head strong { color: var(--teal); }
+
+.lane-head span {
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.lane-stage-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lane-stage-stack .stage-card {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.ghost-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 4px 10px;
+}
+
+.ghost-steps span {
+  padding: 8px 10px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.lane-ghost-note {
+  margin: 0 4px 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.lane-connect {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  height: 24px;
+  margin: -4px 0;
+}
+
+.lane-connect span {
+  position: relative;
+}
+
+.lane-connect::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  border-left: 1.5px solid var(--line-strong);
+}
+
+.connect-top::before { top: 0; height: 11px; }
+.connect-bottom::before { bottom: 0; height: 11px; }
+
+.lane-connect span::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  border-left: 1.5px solid var(--line-strong);
+}
+
+.connect-top span::before { top: 11px; bottom: 0; }
+.connect-bottom span::before { top: 0; bottom: 11px; }
+
+.lane-connect span::after {
+  content: "";
+  position: absolute;
+  border-top: 1.5px solid var(--line-strong);
+}
+
+.connect-top span:first-child::after { top: 11px; left: 50%; right: -6px; }
+.connect-top span:last-child::after { top: 11px; right: 50%; left: -6px; }
+.connect-bottom span:first-child::after { bottom: 11px; left: 50%; right: -6px; }
+.connect-bottom span:last-child::after { bottom: 11px; right: 50%; left: -6px; }
+
+.chip-lane-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.dot-pdf { background: var(--violet); }
+.dot-excel { background: var(--teal); }
+.dot-shared { background: rgba(15, 23, 42, 0.28); }
+
+.lane-tint-pdf {
+  background: rgba(105, 92, 255, 0.1);
+  color: var(--violet);
+}
+
+.lane-tint-excel {
+  background: rgba(15, 118, 110, 0.1);
+  color: var(--teal);
 }
 
 .stepper-bar {
@@ -4425,17 +4672,28 @@ button {
     width: min(var(--max), calc(100% - 42px));
   }
 
-  .case-picker {
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    padding-bottom: 8px;
-    scroll-snap-type: x mandatory;
+  .picker-zone-split {
+    grid-template-columns: 1fr;
   }
 
-  .case-picker .case-card {
-    flex: 0 0 168px;
-    scroll-snap-align: start;
+  .zone-excel .zone-cards {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  .lane-connect {
+    display: none;
+  }
+
+  .lane-band.active-pdf,
+  .lane-band.active-excel {
+    grid-template-columns: 1fr;
+  }
+
+  .lane-container.active { order: 1; }
+  .lane-container.ghost { order: 2; }
+
+  .lane-container.ghost .ghost-steps {
+    display: none;
   }
 
   .inspector-body {

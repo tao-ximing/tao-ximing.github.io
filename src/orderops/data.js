@@ -781,6 +781,7 @@ export const INSPECTOR_CASES = [
     chipLabel: "Claim, not order",
     customer: "Willow Lane Gifts",
     docType: "PDF",
+    entryCase: true,
     badge: { tone: "amber", label: "Routed — not an order" },
     blurb: "A credit claim that would have become a phantom order in a naive flow.",
     document: {

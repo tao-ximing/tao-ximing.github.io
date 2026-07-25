@@ -22,6 +22,18 @@ function getStages(kase, variant) {
   return kase.variants ? kase.variants[variant].stages : kase.stages;
 }
 
+const SHARED_KEYS = ["classify", "validate", "outcome"];
+
+const LANE_META = {
+  pdf: { label: "PDF lane", sub: "OCR · LLM verify · fuzzy match" },
+  excel: { label: "Excel lane", sub: "detect · template scripts" },
+};
+
+const GHOST_STEPS = {
+  pdf: ["OCR extraction", "LLM verification", "Fuzzy matching"],
+  excel: ["Template detect", "Parse script"],
+};
+
 function computeStatuses(stages, done, running) {
   const firstUndone = stages.find((s) => !s.notReached && !done[s.key]);
   return stages.map((s, i) => {
@@ -617,6 +629,9 @@ function CaseRunner({ kase, stages }) {
   }
 
   const doc = kase.document;
+  const caseLane = kase.docType === "PDF" ? "pdf" : "excel";
+  const ghostDocLabel = kase.docType === "PDF" ? "a PDF" : "an Excel file";
+  const laneStages = stages.filter((s) => !SHARED_KEYS.includes(s.key));
 
   return (
     <div className="inspector-body">
@@ -624,7 +639,7 @@ function CaseRunner({ kase, stages }) {
         <div className="inspector-doc-head">
           <div>
             <strong>{kase.customer}</strong>
-            <span className="doc-type-chip">{kase.docType}</span>
+            <span className={`doc-type-chip lane-tint-${caseLane}`}>{kase.docType}</span>
           </div>
           <span className={`case-badge badge-${kase.badge.tone}`}>{kase.badge.label}</span>
         </div>
@@ -653,6 +668,7 @@ function CaseRunner({ kase, stages }) {
                 className={`stepper-chip chip-${statuses[i]}`}
                 onClick={() => stageRefs.current[s.key]?.scrollIntoView({ behavior: "smooth", block: "center" })}
               >
+                <span className={`chip-lane-dot dot-${SHARED_KEYS.includes(s.key) ? "shared" : caseLane}`} />
                 {STATUS_ICONS[statuses[i]]}
                 {s.short || s.title.split(" — ")[0].replace("Email ", "").replace("Customer ", "").replace(" Gate", "")}
               </button>
@@ -670,10 +686,54 @@ function CaseRunner({ kase, stages }) {
           </div>
         </div>
 
-        {stages.map((stage, i) => {
-          const status = statuses[i];
-          const isCollapsed = collapsed[stage.key];
-          return (
+        {stages.filter((s) => s.key === "classify").map(renderStageCard)}
+
+        <div className={`lane-connect connect-top active-${caseLane}`} aria-hidden="true">
+          <span />
+          <span />
+        </div>
+
+        <div className={`lane-band active-${caseLane}`}>
+          {["pdf", "excel"].map((lane) =>
+            lane === caseLane ? (
+              <section key={lane} className={`lane-container lane-${lane} active`}>
+                <header className="lane-head">
+                  <strong>{LANE_META[lane].label}</strong>
+                  <span>{LANE_META[lane].sub}</span>
+                </header>
+                <div className="lane-stage-stack">{laneStages.map(renderStageCard)}</div>
+              </section>
+            ) : (
+              <section key={lane} className={`lane-container lane-${lane} ghost`}>
+                <header className="lane-head">
+                  <strong>{LANE_META[lane].label}</strong>
+                </header>
+                <div className="ghost-steps">
+                  {GHOST_STEPS[lane].map((step) => (
+                    <span key={step}>{step}</span>
+                  ))}
+                </div>
+                <p className="lane-ghost-note">Not this order's lane — this one is {ghostDocLabel}.</p>
+              </section>
+            )
+          )}
+        </div>
+
+        <div className={`lane-connect connect-bottom active-${caseLane}`} aria-hidden="true">
+          <span />
+          <span />
+        </div>
+
+        {stages.filter((s) => s.key === "validate" || s.key === "outcome").map(renderStageCard)}
+      </div>
+    </div>
+  );
+
+  function renderStageCard(stage) {
+    const i = stages.indexOf(stage);
+    const status = statuses[i];
+    const isCollapsed = collapsed[stage.key];
+    return (
             <article
               key={stage.key}
               ref={(el) => {
@@ -750,35 +810,73 @@ function CaseRunner({ kase, stages }) {
                 </div>
               )}
             </article>
-          );
-        })}
+    );
+  }
+}
+
+function CaseCard({ kase, active, onSelect }) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      className={`case-card ${active ? "active" : ""}`}
+      onClick={() => onSelect(kase.id)}
+    >
+      <div className="case-thumb">
+        <DocumentSvg doc={kase.document} mini />
       </div>
-    </div>
+      <strong>{kase.chipLabel}</strong>
+      <span className="case-customer">
+        {kase.customer} · {kase.docType}
+      </span>
+      <span className={`case-badge badge-${kase.badge.tone}`}>{kase.badge.label}</span>
+    </button>
   );
 }
 
 function CasePicker({ activeId, onSelect }) {
+  const entryCases = INSPECTOR_CASES.filter((c) => c.entryCase);
+  const pdfCases = INSPECTOR_CASES.filter((c) => !c.entryCase && c.docType === "PDF");
+  const excelCases = INSPECTOR_CASES.filter((c) => !c.entryCase && c.docType === "Excel");
+
   return (
-    <div className="case-picker" role="tablist" aria-label="Mock order cases">
-      {INSPECTOR_CASES.map((c) => (
-        <button
-          key={c.id}
-          type="button"
-          role="tab"
-          aria-selected={activeId === c.id}
-          className={`case-card ${activeId === c.id ? "active" : ""}`}
-          onClick={() => onSelect(c.id)}
-        >
-          <div className="case-thumb">
-            <DocumentSvg doc={c.document} mini />
+    <div className="case-picker-zones" role="tablist" aria-label="Mock order cases">
+      <div className="picker-zone zone-entry">
+        <div className="zone-head">
+          <strong>Shared entry — Classification</strong>
+          <span>One classifier for every email. Non-orders are stopped here and never reach a lane.</span>
+        </div>
+        <div className="zone-cards">
+          {entryCases.map((c) => (
+            <CaseCard key={c.id} kase={c} active={activeId === c.id} onSelect={onSelect} />
+          ))}
+        </div>
+      </div>
+      <div className="picker-zone-split">
+        <div className="picker-zone zone-pdf">
+          <div className="zone-head">
+            <strong>{LANE_META.pdf.label}</strong>
+            <span>{LANE_META.pdf.sub}</span>
           </div>
-          <strong>{c.chipLabel}</strong>
-          <span className="case-customer">
-            {c.customer} · {c.docType}
-          </span>
-          <span className={`case-badge badge-${c.badge.tone}`}>{c.badge.label}</span>
-        </button>
-      ))}
+          <div className="zone-cards">
+            {pdfCases.map((c) => (
+              <CaseCard key={c.id} kase={c} active={activeId === c.id} onSelect={onSelect} />
+            ))}
+          </div>
+        </div>
+        <div className="picker-zone zone-excel">
+          <div className="zone-head">
+            <strong>{LANE_META.excel.label}</strong>
+            <span>{LANE_META.excel.sub}</span>
+          </div>
+          <div className="zone-cards">
+            {excelCases.map((c) => (
+              <CaseCard key={c.id} kase={c} active={activeId === c.id} onSelect={onSelect} />
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
