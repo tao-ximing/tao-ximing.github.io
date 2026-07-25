@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import { createRoot } from "react-dom/client";
 import { motion } from "framer-motion";
 import {
   ArrowDownToLine,
@@ -35,6 +34,7 @@ import "./styles.css";
 const email = "directortao@gmail.com";
 const githubUrl = "https://github.com/ttm43";
 const assetBase = import.meta.env.BASE_URL;
+const to = (slug) => `${assetBase}${slug}`;
 
 const projects = [
   {
@@ -44,7 +44,7 @@ const projects = [
     tags: ["AI Agent", "Automation", "Document AI", "Human Review"],
     outcome:
       "95% extraction accuracy. 70% of eligible orders fully automated. 2h saved per user per day.",
-    href: "#/projects/orderops",
+    href: to("projects/orderops"),
     status: "Playable case study",
   },
   {
@@ -53,7 +53,7 @@ const projects = [
     subtitle: "Grounded legal Q&A with verified sources and controlled responses.",
     tags: ["RAG", "Source Grounding", "Evaluation"],
     outcome: "Verified answer records, confidence gates, and human fallback.",
-    href: "#/projects/knowledgeguard",
+    href: to("projects/knowledgeguard"),
     status: "Interactive pipeline",
   },
   {
@@ -62,7 +62,7 @@ const projects = [
     subtitle: "Clinician-in-the-loop assessments, exercise drafts, and patient reports.",
     tags: ["Healthcare Workflow", "Reports", "Human Review"],
     outcome: "AI-assisted workflow without replacing clinical decision-making.",
-    href: "#/projects/clinicflow",
+    href: to("projects/clinicflow"),
     status: "Product walkthrough",
   },
   {
@@ -71,7 +71,7 @@ const projects = [
     subtitle: "OCR, layout parsing, table detection, and structured extraction.",
     tags: ["Document AI", "OCR", "Layout Parsing"],
     outcome: "65% baseline to 92% post-processed layout accuracy.",
-    href: "#/projects/docparse",
+    href: to("projects/docparse"),
     status: "Technical foundation",
   },
 ];
@@ -228,25 +228,68 @@ const resume = {
   ],
 };
 
-function useHashRoute() {
-  const [route, setRoute] = useState(window.location.hash || "#/");
-
-  useEffect(() => {
-    const onHashChange = () => setRoute(window.location.hash || "#/");
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
-  }, []);
-
-  return route;
+function pathToSlug(pathname) {
+  let path = pathname;
+  if (path.startsWith(assetBase)) path = path.slice(assetBase.length);
+  return path.replace(/^\/+/, "").replace(/\/+$/, "");
 }
 
-function App() {
-  const route = useHashRoute();
-  const slug = route.replace("#", "").replace(/^\/+/, "");
+function useRoute(initialPath) {
+  const [slug, setSlug] = useState(() =>
+    typeof window === "undefined" ? pathToSlug(initialPath || "/") : pathToSlug(window.location.pathname)
+  );
+
+  useEffect(() => {
+    const onNavigate = () => setSlug(pathToSlug(window.location.pathname));
+    window.addEventListener("popstate", onNavigate);
+    return () => window.removeEventListener("popstate", onNavigate);
+  }, []);
+
+  return slug;
+}
+
+const KNOWN_SLUGS = new Set([
+  "",
+  "resume",
+  "projects/orderops",
+  "projects/knowledgeguard",
+  "projects/docparse",
+  "projects/clinicflow",
+]);
+
+const ROUTE_TITLES = {
+  "": "Ximing Tao | AI Workflow Systems",
+  resume: "Resume | Ximing Tao",
+  "projects/orderops": "Sales Order Automation | Ximing Tao",
+  "projects/knowledgeguard": "Legal QA Pipeline | Ximing Tao",
+  "projects/docparse": "Document Intelligence Platform | Ximing Tao",
+  "projects/clinicflow": "Clinical Workflow App | Ximing Tao",
+};
+
+export default function App({ initialPath }) {
+  const slug = useRoute(initialPath);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.title = ROUTE_TITLES[slug] || ROUTE_TITLES[""];
   }, [slug]);
+
+  useEffect(() => {
+    function onClick(event) {
+      if (event.defaultPrevented || event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const anchor = event.target.closest("a");
+      if (!anchor || anchor.target || anchor.hasAttribute("download")) return;
+      const href = anchor.getAttribute("href") || "";
+      if (!href.startsWith(assetBase)) return;
+      event.preventDefault();
+      window.history.pushState(null, "", href);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    }
+
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, []);
 
   return (
     <div>
@@ -258,11 +301,8 @@ function App() {
         {slug === "projects/docparse" && <DocParsePage />}
         {slug === "projects/clinicflow" && <ClinicFlowPage />}
         {slug === "resume" && <ResumePage />}
-        {slug.startsWith("projects/") &&
-          slug !== "projects/orderops" &&
-          slug !== "projects/knowledgeguard" &&
-          slug !== "projects/docparse" &&
-          slug !== "projects/clinicflow" && <PlaceholderPage />}
+        {slug.startsWith("projects/") && !KNOWN_SLUGS.has(slug) && <PlaceholderPage />}
+        {!slug.startsWith("projects/") && !KNOWN_SLUGS.has(slug) && <HomePage />}
       </main>
       <SiteFooter />
     </div>
@@ -281,7 +321,7 @@ function SiteFooter() {
         <a href={githubUrl} target="_blank" rel="noreferrer">
           GitHub
         </a>
-        <a href="#/resume">Resume</a>
+        <a href={to("resume")}>Resume</a>
       </nav>
     </footer>
   );
@@ -290,13 +330,13 @@ function SiteFooter() {
 function SiteHeader() {
   return (
     <header className="site-header">
-      <a href="#/" className="brand" aria-label="Ximing Tao home">
+      <a href={to("")} className="brand" aria-label="Ximing Tao home">
         <span>XT</span>
         Ximing Tao
       </a>
       <nav>
-        <a href="#/">Home</a>
-        <a href="#/resume">Resume</a>
+        <a href={to("")}>Home</a>
+        <a href={to("resume")}>Resume</a>
       </nav>
     </header>
   );
@@ -483,7 +523,7 @@ function OrderOpsPage() {
 
 function AutomationSandbox() {
   const canvasRef = useRef(null);
-  const [isNarrowCanvas, setIsNarrowCanvas] = useState(() => window.innerWidth <= 980);
+  const [isNarrowCanvas, setIsNarrowCanvas] = useState(false);
   const attachmentPositions = {
     pdf: { x: 74, y: 240 },
     excel: { x: 154, y: 240 },
@@ -1570,7 +1610,7 @@ function PlaceholderPage() {
         This write-up is not published yet. I am happy to walk through it live — reach out
         at <a href={`mailto:${email}`}>{email}</a>.
       </p>
-      <a href="#/">Back to home</a>
+      <a href={to("")}>Back to home</a>
     </section>
   );
 }
@@ -1621,5 +1661,3 @@ function ResumePage() {
     </section>
   );
 }
-
-createRoot(document.getElementById("root")).render(<App />);

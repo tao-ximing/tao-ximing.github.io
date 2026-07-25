@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ttm43.github.io/ximingtao.github.io/sitemap.xml
