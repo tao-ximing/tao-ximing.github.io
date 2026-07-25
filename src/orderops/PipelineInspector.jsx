@@ -85,6 +85,53 @@ function ClassifyPanel({ stage }) {
   );
 }
 
+const TEMPLATE_CLASSES = ["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "unknown"];
+
+function DetectPanel({ stage }) {
+  const d = stage.artifact;
+  const resultShort = d.result === "unknown" ? "unknown" : d.result.replace("Template #", "T");
+  return (
+    <div className="detect-panel">
+      <div className="detect-step">
+        <span className="panel-label">Step 1 — sender check</span>
+        <div className={`mapping-hit ${d.senderCheck.hit ? "" : "mapping-miss"}`}>
+          <span className="mapping-sender">{d.senderCheck.sender}</span>
+          <span className="mapping-arrow">→</span>
+          <span className="mapping-account">
+            {d.senderCheck.hit
+              ? `${d.senderCheck.template}${d.senderCheck.customer ? ` · ${d.senderCheck.customer}` : ""}`
+              : "not in sender mapping"}
+          </span>
+        </div>
+      </div>
+      <div className="detect-step">
+        <span className="panel-label">Step 2 — structure check</span>
+        <p className="panel-note detect-note">
+          {d.structureCheck
+            ? `Compared against all ${d.structureCheck.checked} template structures — no match.`
+            : "Skipped — the sender resolved it."}
+        </p>
+        <div className="template-chips" aria-label="Nine detect classes">
+          {TEMPLATE_CLASSES.map((t) => (
+            <span
+              key={t}
+              className={`template-chip ${resultShort === t ? (t === "unknown" ? "matched-unknown" : "matched") : ""}`}
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+      </div>
+      {stage.stops && (
+        <p className="stage-stop-note">
+          <AlertTriangle size={13} />
+          {stage.stops}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function OcrFieldRow({ field, status, hovered, onHover, onVerify, verifyReady }) {
   const done = status === "done";
   const corrected = done && field.verify && !field.verify.response.agreesWithOcr && !field.verify.failed;
@@ -455,6 +502,8 @@ function StagePanel(props) {
   switch (stage.key) {
     case "classify":
       return <ClassifyPanel stage={stage} />;
+    case "detect":
+      return <DetectPanel stage={stage} />;
     case "extract":
       return <ExtractPanel {...props} />;
     case "verify":
@@ -568,7 +617,6 @@ function CaseRunner({ kase, stages }) {
   }
 
   const doc = kase.document;
-  const highlightCol = extractDone && extractStage?.highlightCol != null ? extractStage.highlightCol : null;
 
   return (
     <div className="inspector-body">
@@ -590,7 +638,6 @@ function CaseRunner({ kase, stages }) {
           hoveredId={hoveredId}
           onHoverField={setHoveredId}
           onVerifyField={verifyField}
-          highlightCol={highlightCol}
           reduce={reduce}
         />
         {!extractDone && <p className="doc-hint">Annotations appear once you run extraction.</p>}
@@ -607,7 +654,7 @@ function CaseRunner({ kase, stages }) {
                 onClick={() => stageRefs.current[s.key]?.scrollIntoView({ behavior: "smooth", block: "center" })}
               >
                 {STATUS_ICONS[statuses[i]]}
-                {s.title.split(" — ")[0].replace("Email ", "").replace("Customer ", "").replace(" Gate", "")}
+                {s.short || s.title.split(" — ")[0].replace("Email ", "").replace("Customer ", "").replace(" Gate", "")}
               </button>
             ))}
           </div>
@@ -747,9 +794,10 @@ export default function PipelineInspector() {
       <div className="inspector-head">
         <h2>Pipeline Inspector</h2>
         <p>
-          Seven mock orders — successes and failures — stepped through the real pipeline stage by stage. All
-          customers, accounts, and prices are fictional; the error patterns are not. Run each stage yourself, or
-          hit Auto-run.
+          Eight mock orders — successes and failures — stepped through the pipeline's two lanes: PDFs go to OCR,
+          LLM verification, and fuzzy matching; Excel goes to a deterministic template detect and per-template
+          parse scripts. Both converge on the same validation gate. All customers, accounts, and prices are
+          fictional; the error patterns are not. Run each stage yourself, or hit Auto-run.
         </p>
       </div>
 

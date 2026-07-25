@@ -311,7 +311,6 @@ export function DocumentSvg({
   hoveredId = null,
   onHoverField,
   onVerifyField,
-  highlightCol = null,
   reduce = false,
 }) {
   const uid = useId().replace(/:/g, "");
@@ -342,31 +341,6 @@ export function DocumentSvg({
         <ExcelContents doc={doc} layout={layout} />
       ) : (
         <PdfContents doc={doc} layout={layout} smudgeFilter={smudgeFilter} />
-      )}
-
-      {highlightCol != null && layout.colBoxes?.[highlightCol] && (
-        <motion.g initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
-          <rect
-            x={layout.colBoxes[highlightCol].x}
-            y={layout.colBoxes[highlightCol].y}
-            width={layout.colBoxes[highlightCol].w}
-            height={layout.colBoxes[highlightCol].h}
-            fill="rgba(105,92,255,0.12)"
-            stroke="#695cff"
-            strokeWidth="1.4"
-            rx="3"
-          />
-          <text
-            x={layout.colBoxes[highlightCol].x + layout.colBoxes[highlightCol].w / 2}
-            y={layout.colBoxes[highlightCol].y + layout.colBoxes[highlightCol].h + 16}
-            fontSize="9"
-            fontWeight="700"
-            textAnchor="middle"
-            fill="#695cff"
-          >
-            LLM grabbed this column
-          </text>
-        </motion.g>
       )}
 
       {boxesVisible &&

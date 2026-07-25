@@ -3434,7 +3434,7 @@ button {
 
 .case-picker {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   margin-bottom: 18px;
 }
@@ -4134,6 +4134,51 @@ button {
 .mapping-sender { color: var(--muted); }
 .mapping-arrow { color: var(--green); font-weight: 800; }
 .mapping-account { color: var(--ink); font-weight: 700; }
+
+.mapping-hit.mapping-miss {
+  border-color: rgba(194, 106, 34, 0.4);
+  background: rgba(194, 106, 34, 0.06);
+}
+
+.mapping-miss .mapping-arrow { color: var(--amber); }
+.mapping-miss .mapping-account { color: var(--amber); }
+
+.detect-step {
+  margin-bottom: 12px;
+}
+
+.detect-note {
+  margin: 0 0 7px;
+}
+
+.template-chips {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.template-chip {
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.03);
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 720;
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+.template-chip.matched {
+  border-color: rgba(5, 150, 105, 0.5);
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--green);
+}
+
+.template-chip.matched-unknown {
+  border-color: rgba(194, 65, 53, 0.5);
+  background: rgba(194, 65, 53, 0.08);
+  color: var(--red);
+}
 
 .layer-list {
   margin: 12px 0 0;

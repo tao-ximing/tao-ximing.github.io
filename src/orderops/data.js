@@ -13,19 +13,20 @@ const RULE_LABELS = {
   line_count: "Line item count > 0",
   moq: "Quantity meets MOQ / pack multiple",
   sales_origin: "Sales origin = email",
+  address_exact: "Delivery address matches account record exactly",
 };
 
 const r = (id, status, detail) => rule(id, RULE_LABELS[id], status, detail);
 
 export const CAPTIONS = {
   classify:
-    "A missed order stays in the inbox (visible). A false positive hits the validation wall. The classifier is allowed to be wrong.",
+    "A missed order stays in the inbox (visible). A false positive hits the validation wall. The classifier is allowed to be wrong. From here, orders split into two lanes: PDFs to OCR, Excel to template detect.",
   extractPdf:
     "Azure Document Intelligence returns fields, bounding boxes, and confidence. Low confidence is a routing signal, not an error.",
+  detect:
+    "An Office Script, not an LLM: sender first — eight template customers, sixteen fixed sender addresses — then structure. A hit pins template and customer account together, one-to-one. Nine outputs: eight templates plus unknown, and unknown is never guessed.",
   extractScript:
-    "Eight templates cover ~80% of Excel volume — parsed deterministically, effectively 100% extraction accuracy.",
-  extractLlm:
-    "Outside the eight templates, an LLM lane holds the long tail — loosely constrained by design.",
+    "Eight templates cover ~80% of Excel volume — each with its own parse script. No confidence scores in this lane: a cell is what it is, and values go straight to exact checks against master data.",
   verify: "LLM cost is spent only where OCR is uncertain.",
   match:
     "Pre-filter 19,000 master rows down to a shortlist; the LLM only ever chooses among vetted candidates.",
@@ -88,7 +89,8 @@ export const INSPECTOR_CASES = [
       },
       {
         key: "extract",
-        title: "Extraction — OCR",
+        title: "Extraction — OCR (PDF lane)",
+        short: "Extract",
         caption: CAPTIONS.extractPdf,
         lane: "pdf",
         fields: [
@@ -227,7 +229,8 @@ export const INSPECTOR_CASES = [
           },
           {
             key: "extract",
-            title: "Extraction — OCR",
+            title: "Extraction — OCR (PDF lane)",
+        short: "Extract",
             caption: CAPTIONS.extractPdf,
             lane: "pdf",
             fields: [
@@ -329,7 +332,8 @@ export const INSPECTOR_CASES = [
           },
           {
             key: "extract",
-            title: "Extraction — OCR",
+            title: "Extraction — OCR (PDF lane)",
+        short: "Extract",
             caption: CAPTIONS.extractPdf,
             lane: "pdf",
             fields: [
@@ -411,19 +415,36 @@ export const INSPECTOR_CASES = [
     id: "plu-as-itemcode",
     chipLabel: "PLU as item code",
     customer: "Gather Home Co.",
-    docType: "Excel",
+    docType: "PDF",
     badge: { tone: "amber", label: "Blocked → Human Review" },
-    blurb: "The LLM lane grabs the wrong column. The product master catches it.",
+    blurb: "OCR reads the PO faithfully — but the item codes are the customer's own vocabulary.",
     document: {
-      kind: "excel",
-      filename: "gather_home_order_jul.xlsx",
-      columns: ["PLU", "SKU", "Description", "Qty", "Unit $"],
-      widths: [0.16, 0.18, 0.36, 0.12, 0.18],
-      rows: [
-        ["PLU-4471", "GH-1102", "Rattan basket set", "6", "18.00"],
-        ["PLU-4472", "GH-2240", "Glass carafe 1L", "12", "9.40"],
-        ["PLU-4473", "GH-3315", "Cotton napkin pack", "24", "4.25"],
+      kind: "pdf",
+      docTitle: "PURCHASE ORDER",
+      company: "Gather Home Co.",
+      tagline: "Everyday homeware, gathered",
+      accent: "#059669",
+      meta: [
+        { id: "po_number", label: "PO number", value: "PO GH-JUL-19" },
+        { id: "order_date", label: "Order date", value: "16 Jul 2026" },
+        { id: "store_name", label: "Store", value: "Gather Home Co. — Kingsford" },
+        { id: "delivery_address", label: "Deliver to", value: "88 Loom St, Kingsford NSW 2872" },
       ],
+      table: {
+        columns: [
+          { label: "PLU code", w: 0.24 },
+          { label: "Description", w: 0.42 },
+          { label: "Qty", w: 0.12 },
+          { label: "Unit $", w: 0.22 },
+        ],
+        rows: [
+          ["PLU-4471", "Rattan basket set", "6", "18.00"],
+          ["PLU-4472", "Glass carafe 1L", "12", "9.40"],
+          ["PLU-4473", "Cotton napkin pack", "24", "4.25"],
+        ],
+        fieldCells: { "0-0": "item_code_1", "1-0": "item_code_2", "2-0": "item_code_3" },
+      },
+      signature: true,
     },
     stages: [
       {
@@ -432,26 +453,25 @@ export const INSPECTOR_CASES = [
         caption: CAPTIONS.classify,
         artifact: {
           documentType: "purchase_order",
-          confidence: 0.95,
-          reasoning: "Spreadsheet attachment with quantities and prices; subject reads “July order”.",
+          confidence: 0.96,
+          reasoning: "PDF attachment with a PO number and priced line items; known sender domain.",
         },
       },
       {
         key: "extract",
-        title: "Extraction — LLM lane",
-        caption: CAPTIONS.extractLlm,
-        lane: "excel-llm",
-        highlightCol: 0,
-        artifact: {
-          templateMatch: null,
-          lane: "llm",
-          note: "No template match — routed to the LLM extraction lane. The sheet has both a PLU column and a SKU column; the LLM grabbed the more prominent PLU values.",
-          rows: [
-            { item_code: "PLU-4471", qty: 6, unit_price: 18.0 },
-            { item_code: "PLU-4472", qty: 12, unit_price: 9.4 },
-            { item_code: "PLU-4473", qty: 24, unit_price: 4.25 },
-          ],
-        },
+        title: "Extraction — OCR (PDF lane)",
+        short: "Extract",
+        caption: CAPTIONS.extractPdf,
+        lane: "pdf",
+        fields: [
+          { id: "po_number", value: "PO GH-JUL-19", confidence: 0.98 },
+          { id: "order_date", value: "16 Jul 2026", confidence: 0.97 },
+          { id: "store_name", value: "Gather Home Co. — Kingsford", confidence: 0.96 },
+          { id: "delivery_address", value: "88 Loom St, Kingsford NSW 2872", confidence: 0.97 },
+          { id: "item_code_1", value: "PLU-4471", confidence: 0.97 },
+          { id: "item_code_2", value: "PLU-4472", confidence: 0.98 },
+          { id: "item_code_3", value: "PLU-4473", confidence: 0.96 },
+        ],
       },
       {
         key: "match",
@@ -479,13 +499,17 @@ export const INSPECTOR_CASES = [
         caption: CAPTIONS.validate,
         rules: [
           r("customer_cross", "pass", "Gather Home Co. ↔ AC-14220"),
-          r("item_master", "fail", "PLU-4471, PLU-4472, PLU-4473 — none exist in product master (customer SKUs GH-1102, GH-2240, GH-3315 were on the sheet)"),
+          r(
+            "item_master",
+            "fail",
+            "PLU-4471, PLU-4472, PLU-4473 — extracted faithfully, but every customer names item codes differently; these are Gather Home's own codes, and this account has no code whitelist yet"
+          ),
           r("price_present", "pass", "All lines priced"),
           r("line_count", "pass", "3 lines"),
           r("sales_origin", "pass", 'Set to "email"'),
         ],
         fixNote:
-          "Remediation: a per-customer SKU → internal item code mapping table, applied before validation — per-customer knowledge captured as data, not prompt text.",
+          "Remediation: a per-customer item-code whitelist (customer code → internal code), applied before validation — per-customer vocabulary captured as data, not prompt text.",
       },
       {
         key: "outcome",
@@ -501,7 +525,7 @@ export const INSPECTOR_CASES = [
             "Line 3: PLU-4473 not in product master",
           ],
           email:
-            "Hi team — we received your July order but couldn't match the item codes PLU-4471, PLU-4472 and PLU-4473. Could you confirm the SKU codes for these lines? Reply to this email and we'll process the order straight away.",
+            "Hi team — we received your July order but couldn't match the item codes PLU-4471, PLU-4472 and PLU-4473 against our catalogue. Could you confirm the corresponding product codes? We'll add them to your account's mapping so future orders go straight through.",
         },
       },
     ],
@@ -536,8 +560,25 @@ export const INSPECTOR_CASES = [
         },
       },
       {
+        key: "detect",
+        title: "Template Detect (Excel lane)",
+        short: "Detect",
+        caption: CAPTIONS.detect,
+        artifact: {
+          senderCheck: {
+            sender: "orders@northgatetrading.example",
+            hit: true,
+            template: "Template #3",
+            customer: "Northgate Trading · AC-17708",
+          },
+          structureCheck: null,
+          result: "Template #3",
+        },
+      },
+      {
         key: "extract",
-        title: "Extraction — Template #3",
+        title: "Parse — Template #3 script",
+        short: "Parse",
         caption: CAPTIONS.extractScript,
         lane: "excel-script",
         artifact: {
@@ -551,31 +592,12 @@ export const INSPECTOR_CASES = [
         },
       },
       {
-        key: "match",
-        title: "Customer Matching",
-        caption: CAPTIONS.match,
-        prefilter: {
-          filters: { suburb: "Westhaven", postcode: "3811", storeNameTokens: ["northgate"] },
-          from: 19000,
-          to: 1,
-        },
-        shortlist: [
-          {
-            accountId: "AC-17708",
-            name: "Northgate Trading — Westhaven",
-            address: "4 Anchor Way, Westhaven",
-            score: 0.97,
-            pick: true,
-            correct: true,
-          },
-        ],
-      },
-      {
         key: "validate",
         title: "Validation Gate",
         caption: CAPTIONS.validate,
         rules: [
-          r("customer_cross", "pass", "Northgate Trading ↔ AC-17708"),
+          r("customer_cross", "pass", "Account pinned by detect — sender ↔ AC-17708, one-to-one; no fuzzy matching in this lane"),
+          r("address_exact", "pass", "Sheet address matches the AC-17708 record exactly (a mismatch routes to a human: “has the customer moved?”)"),
           r("item_master", "pass", "2 of 2 item codes found"),
           r("price_present", "fail", "Line 2 (NT-1120): unit price empty"),
           r("price_tolerance", "fail", "Line 1 (NT-0705): $41.80 vs price list $31.20 — +34% deviation"),
@@ -597,6 +619,63 @@ export const INSPECTOR_CASES = [
           ],
           email:
             "Hi team — quick check on your PO NT-0731 before we process it: line 1 (NT-0705) is priced at $41.80 against a list price of $31.20, and line 2 (NT-1120) has no unit price. Could you confirm both?",
+        },
+      },
+    ],
+  },
+
+  {
+    id: "unknown-template",
+    chipLabel: "Unknown template",
+    customer: "Maple & March Trading",
+    docType: "Excel",
+    badge: { tone: "amber", label: "Routed — unknown template" },
+    blurb: "A format the scripts don't know. It queues for a human — never for an LLM.",
+    document: {
+      kind: "excel",
+      filename: "mm_order_form_v2.xlsx",
+      columns: ["Ref", "Product", "Units", "AUD"],
+      widths: [0.18, 0.46, 0.14, 0.22],
+      rows: [
+        ["MM-118", "Jute rug 2x3m", "5", "48.00"],
+        ["MM-204", "Brass wall hook set", "18", "6.50"],
+      ],
+    },
+    stages: [
+      {
+        key: "classify",
+        title: "Email Classification",
+        caption: CAPTIONS.classify,
+        artifact: {
+          documentType: "purchase_order",
+          confidence: 0.94,
+          reasoning: "Spreadsheet with quantities and prices; subject reads “order form attached”.",
+        },
+      },
+      {
+        key: "detect",
+        title: "Template Detect (Excel lane)",
+        short: "Detect",
+        caption: CAPTIONS.detect,
+        stops: "Unknown template — routed to human entry, outside this flow.",
+        artifact: {
+          senderCheck: { sender: "orders@mapleandmarch.example", hit: false },
+          structureCheck: { checked: 8, match: null },
+          result: "unknown",
+        },
+      },
+      { key: "extract", title: "Parse", notReached: "Not reached — no template, no parse. Nothing guesses." },
+      { key: "validate", title: "Validation Gate", notReached: "Not reached — the order is handled by a human" },
+      {
+        key: "outcome",
+        title: "Outcome",
+        caption:
+          "Unknowns are also collected outside this flow: an LLM agent in Container Apps clusters them by structure, and when a cluster accumulates enough volume it graduates into a new template script.",
+        kind: "routed",
+        routed: {
+          title: "Queued for human entry — no parse attempted",
+          detail:
+            "The order is processed manually today. Meanwhile its format joins the unknown-template pool; structural clustering decides which format earns the ninth script. The LLM classifies formats — it never extracts order data.",
         },
       },
     ],
@@ -637,7 +716,8 @@ export const INSPECTOR_CASES = [
       },
       {
         key: "extract",
-        title: "Extraction — OCR",
+        title: "Extraction — OCR (PDF lane)",
+        short: "Extract",
         caption: "Header fields read fine. The line-item table — skewed, low-contrast — was never detected.",
         lane: "pdf",
         fields: [
@@ -799,7 +879,8 @@ export const INSPECTOR_CASES = [
       },
       {
         key: "extract",
-        title: "Extraction — OCR",
+        title: "Extraction — OCR (PDF lane)",
+        short: "Extract",
         caption: CAPTIONS.extractPdf,
         lane: "pdf",
         fields: [
