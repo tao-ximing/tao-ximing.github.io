@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  base: "/ximingtao.github.io/",
+  base: "/",
   ssr: {
     noExternal: ["framer-motion", "lucide-react"],
   },

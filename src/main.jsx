@@ -32,7 +32,7 @@ import PipelineInspector from "./orderops/PipelineInspector.jsx";
 import "./styles.css";
 
 const email = "directortao@gmail.com";
-const githubUrl = "https://github.com/ttm43";
+const githubUrl = "https://github.com/tao-ximing";
 const assetBase = import.meta.env.BASE_URL;
 const to = (slug) => `${assetBase}${slug}`;
 

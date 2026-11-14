@@ -8,8 +8,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const { render } = await import(pathToFileURL(path.join(root, "dist-ssr", "entry-server.js")).href);
 
-const BASE = "/ximingtao.github.io/";
-const SITE = "https://ttm43.github.io/ximingtao.github.io/";
+const BASE = "/";
+const SITE = "https://tao-ximing.github.io/";
 
 const ROUTES = [
   {
