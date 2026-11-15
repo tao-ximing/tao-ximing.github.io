@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   AlertTriangle,
@@ -15,6 +15,7 @@ import {
   XCircle,
   Zap,
 } from "lucide-react";
+import { handleTabListKeyDown } from "../a11y.js";
 import { INSPECTOR_CASES } from "./data.js";
 import { DocCrop, DocumentSvg, confTone } from "./DocumentSvg.jsx";
 
@@ -150,14 +151,26 @@ function OcrFieldRow({ field, status, hovered, onHover, onVerify, verifyReady })
   const failed = done && field.verify?.failed;
   const shownValue = corrected ? field.verify.response.verifiedValue : field.value;
   const conf = done && field.verify ? field.verify.response.confidence : field.confidence;
+  const toggleHighlight = () => onHover(hovered ? null : field.id);
   return (
     <div
       className={`ocr-row ${hovered ? "hovered" : ""}`}
       onMouseEnter={() => onHover(field.id)}
       onMouseLeave={() => onHover(null)}
-      onClick={() => onHover(hovered ? null : field.id)}
+      onClick={toggleHighlight}
     >
-      <span className="j-key">"{field.id}"</span>
+      <button
+        type="button"
+        className="ocr-key j-key"
+        aria-label={`Highlight "${field.id}" in document`}
+        aria-pressed={hovered}
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleHighlight();
+        }}
+      >
+        "{field.id}"
+      </button>
       <span className="ocr-value">
         <span className={`j-str ${failed ? "j-failed" : ""}`}>"{shownValue}"</span>
         {corrected && <s className="ocr-was">was: "{field.value}"</s>}
@@ -539,7 +552,7 @@ const STATUS_ICONS = {
   notReached: <MinusCircle size={13} />,
 };
 
-function CaseRunner({ kase, stages }) {
+function CaseRunner({ kase, stages, panelProps }) {
   const reduce = useReducedMotion();
   const [done, setDone] = useState({});
   const [running, setRunning] = useState(null);
@@ -634,7 +647,7 @@ function CaseRunner({ kase, stages }) {
   const laneStages = stages.filter((s) => !SHARED_KEYS.includes(s.key));
 
   return (
-    <div className="inspector-body">
+    <div className="inspector-body" {...panelProps}>
       <div className="inspector-doc">
         <div className="inspector-doc-head">
           <div>
@@ -660,17 +673,20 @@ function CaseRunner({ kase, stages }) {
 
       <div className="inspector-stages">
         <div className="stepper-bar">
-          <div className="stepper-chips" role="tablist" aria-label="Pipeline stages">
+          <div className="stepper-chips" role="group" aria-label="Jump to pipeline stage">
             {stages.map((s, i) => (
               <button
                 key={s.key}
                 type="button"
                 className={`stepper-chip chip-${statuses[i]}`}
-                onClick={() => stageRefs.current[s.key]?.scrollIntoView({ behavior: "smooth", block: "center" })}
+                onClick={() =>
+                  stageRefs.current[s.key]?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" })
+                }
               >
                 <span className={`chip-lane-dot dot-${SHARED_KEYS.includes(s.key) ? "shared" : caseLane}`} />
                 {STATUS_ICONS[statuses[i]]}
                 {s.short || s.title.split(" — ")[0].replace("Email ", "").replace("Customer ", "").replace(" Gate", "")}
+                <span className="visually-hidden">, {statuses[i] === "notReached" ? "not reached" : statuses[i]}</span>
               </button>
             ))}
           </div>
@@ -814,13 +830,16 @@ function CaseRunner({ kase, stages }) {
   }
 }
 
-function CaseCard({ kase, active, onSelect }) {
+function CaseCard({ kase, active, onSelect, tabId, zoneId }) {
   return (
     <button
       type="button"
       role="tab"
+      id={tabId}
       aria-selected={active}
-      className={`case-card ${active ? "active" : ""}`}
+      aria-describedby={zoneId}
+      tabIndex={active ? 0 : -1}
+      className="case-card"
       onClick={() => onSelect(kase.id)}
     >
       <div className="case-thumb">
@@ -835,46 +854,55 @@ function CaseCard({ kase, active, onSelect }) {
   );
 }
 
-function CasePicker({ activeId, onSelect }) {
+// Selection is by activation (Enter/Space), not by focus: picking a case
+// remounts the runner and throws away the visitor's progress in it.
+function CasePicker({ activeId, onSelect, tabIdFor, idPrefix }) {
   const entryCases = INSPECTOR_CASES.filter((c) => c.entryCase);
   const pdfCases = INSPECTOR_CASES.filter((c) => !c.entryCase && c.docType === "PDF");
   const excelCases = INSPECTOR_CASES.filter((c) => !c.entryCase && c.docType === "Excel");
+  const zoneId = (zone) => `${idPrefix}-zone-${zone}`;
+  const renderCards = (cases, zone) =>
+    cases.map((c) => (
+      <CaseCard
+        key={c.id}
+        kase={c}
+        active={activeId === c.id}
+        onSelect={onSelect}
+        tabId={tabIdFor(c.id)}
+        zoneId={zoneId(zone)}
+      />
+    ));
 
+  // Zone headings are hidden from the tablist's accessibility tree (a tablist
+  // may only own tabs) and reach each tab through aria-describedby instead.
   return (
-    <div className="case-picker-zones" role="tablist" aria-label="Mock order cases">
+    <div
+      className="case-picker-zones"
+      role="tablist"
+      aria-label="Mock order cases"
+      onKeyDown={(event) => handleTabListKeyDown(event)}
+    >
       <div className="picker-zone zone-entry">
-        <div className="zone-head">
+        <div className="zone-head" id={zoneId("entry")} aria-hidden="true">
           <strong>Shared entry — Classification</strong>
           <span>One classifier for every email. Non-orders are stopped here and never reach a lane.</span>
         </div>
-        <div className="zone-cards">
-          {entryCases.map((c) => (
-            <CaseCard key={c.id} kase={c} active={activeId === c.id} onSelect={onSelect} />
-          ))}
-        </div>
+        <div className="zone-cards">{renderCards(entryCases, "entry")}</div>
       </div>
       <div className="picker-zone-split">
         <div className="picker-zone zone-pdf">
-          <div className="zone-head">
+          <div className="zone-head" id={zoneId("pdf")} aria-hidden="true">
             <strong>{LANE_META.pdf.label}</strong>
             <span>{LANE_META.pdf.sub}</span>
           </div>
-          <div className="zone-cards">
-            {pdfCases.map((c) => (
-              <CaseCard key={c.id} kase={c} active={activeId === c.id} onSelect={onSelect} />
-            ))}
-          </div>
+          <div className="zone-cards">{renderCards(pdfCases, "pdf")}</div>
         </div>
         <div className="picker-zone zone-excel">
-          <div className="zone-head">
+          <div className="zone-head" id={zoneId("excel")} aria-hidden="true">
             <strong>{LANE_META.excel.label}</strong>
             <span>{LANE_META.excel.sub}</span>
           </div>
-          <div className="zone-cards">
-            {excelCases.map((c) => (
-              <CaseCard key={c.id} kase={c} active={activeId === c.id} onSelect={onSelect} />
-            ))}
-          </div>
+          <div className="zone-cards">{renderCards(excelCases, "excel")}</div>
         </div>
       </div>
     </div>
@@ -886,6 +914,8 @@ export default function PipelineInspector() {
   const [variant, setVariant] = useState("before");
   const kase = INSPECTOR_CASES.find((c) => c.id === caseId);
   const stages = getStages(kase, variant);
+  const idPrefix = useId();
+  const tabIdFor = (id) => `${idPrefix}-case-${id}`;
 
   return (
     <section className="inspector-section">
@@ -899,7 +929,12 @@ export default function PipelineInspector() {
         </p>
       </div>
 
-      <CasePicker activeId={caseId} onSelect={(id) => { setCaseId(id); setVariant("before"); }} />
+      <CasePicker
+        activeId={caseId}
+        onSelect={(id) => { setCaseId(id); setVariant("before"); }}
+        tabIdFor={tabIdFor}
+        idPrefix={idPrefix}
+      />
 
       {kase.variants && (
         <div className="before-after-bar">
@@ -908,8 +943,7 @@ export default function PipelineInspector() {
               <button
                 key={v}
                 type="button"
-                role="switch"
-                aria-checked={variant === v}
+                aria-pressed={variant === v}
                 className={variant === v ? "active" : ""}
                 onClick={() => setVariant(v)}
               >
@@ -921,7 +955,12 @@ export default function PipelineInspector() {
         </div>
       )}
 
-      <CaseRunner key={`${caseId}-${variant}`} kase={kase} stages={stages} />
+      <CaseRunner
+        key={`${caseId}-${variant}`}
+        kase={kase}
+        stages={stages}
+        panelProps={{ role: "tabpanel", "aria-labelledby": tabIdFor(caseId) }}
+      />
     </section>
   );
 }

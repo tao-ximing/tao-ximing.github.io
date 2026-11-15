@@ -317,13 +317,19 @@ export function DocumentSvg({
   const smudgeFilter = `url(#smudge-${uid})`;
   const layout = buildLayout(doc);
   const boxedFields = fields.filter((f) => !f.noBox && layout.boxes[f.id]);
+  // role="img" would make the verify markers presentational, so the SVG
+  // becomes a named group while it contains controls.
+  const hasControls = boxesVisible && verifyReady && boxedFields.some((f) => f.verify && fieldStatus[f.id] !== "done");
 
   return (
     <svg
       className={`doc-svg ${mini ? "doc-svg-mini" : ""}`}
       viewBox={`0 0 ${DOC_W} ${DOC_H}`}
-      role="img"
-      aria-label={doc.kind === "excel" ? `Spreadsheet ${doc.filename}` : `${doc.docTitle} from ${doc.company}`}
+      role={mini ? undefined : hasControls ? "group" : "img"}
+      aria-hidden={mini || undefined}
+      aria-label={
+        mini ? undefined : doc.kind === "excel" ? `Spreadsheet ${doc.filename}` : `${doc.docTitle} from ${doc.company}`
+      }
     >
       <defs>
         <filter id={`smudge-${uid}`} x="-10%" y="-40%" width="120%" height="180%">
@@ -376,12 +382,21 @@ export function DocumentSvg({
               />
               {needsVerify && verifyReady && (
                 <g
-                  className={status === "running" ? "" : "bbox-verify-pulse"}
+                  className={`verify-marker ${status === "running" ? "" : "bbox-verify-pulse"}`}
                   style={{ cursor: "pointer" }}
                   onClick={() => onVerifyField?.(field.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") onVerifyField?.(field.id);
+                    if (event.key === " ") event.preventDefault();
+                  }}
+                  onKeyUp={(event) => {
+                    if (event.key === " ") onVerifyField?.(field.id);
+                  }}
                   role="button"
+                  tabIndex={0}
                   aria-label={`Verify ${field.id} with LLM`}
                 >
+                  <circle className="verify-marker-ring" cx={box.x + box.w} cy={box.y} r="13" />
                   <circle cx={box.x + box.w} cy={box.y} r="9.5" fill="#695cff" />
                   <text x={box.x + box.w} y={box.y + 3.5} fontSize="10" textAnchor="middle" fill="#ffffff">
                     ✦

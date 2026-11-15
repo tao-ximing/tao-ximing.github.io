@@ -23,7 +23,9 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  @media (prefers-reduced-motion: no-preference) {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
@@ -48,6 +50,60 @@ input {
 
 button {
   cursor: pointer;
+}
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+
+/* Route changes move focus to the page heading; that is not a control. */
+main h1[tabindex="-1"]:focus {
+  outline: none;
+}
+
+.visually-hidden:where(:not(:focus-within, :active)) {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip-path: inset(50%) !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+h1,
+h2,
+h3,
+.stage-card-head h4 {
+  text-wrap: balance;
+}
+
+:is(.legal-node, .processing-node, .scripts-node, .validation-agent, .handoff-node) h3 {
+  text-wrap: wrap;
+}
+
+.hero p,
+.section-heading p,
+.capability-grid p,
+.capability-grid li,
+.contact-cta p,
+.sandbox-head p,
+.inspector-head p,
+.legal-head p,
+.docparse-head p,
+.doc-eval-panel p,
+.clinic-head p,
+.clinic-description p,
+.clinic-control-card p,
+.resume-hero p,
+.experience-list li,
+.placeholder-page p,
+.stage-caption,
+.panel-note {
+  text-wrap: pretty;
 }
 
 .site-header {
@@ -97,6 +153,12 @@ button {
 
 .site-header nav a:hover {
   color: var(--ink);
+}
+
+.site-header nav a[aria-current="page"] {
+  color: var(--ink);
+  text-decoration: underline 2px;
+  text-underline-offset: 6px;
 }
 
 .hero,
@@ -277,13 +339,19 @@ button {
   cursor: pointer;
 }
 
-.deck-hit-zones span {
+.deck-card-link::after {
+  content: "";
   position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
+  inset: 0;
+}
+
+.deck-card-link:focus-visible {
+  outline: none;
+}
+
+.deck-card:has(.deck-card-link:focus-visible) {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
 }
 
 .deck-card-top {
@@ -644,6 +712,11 @@ button {
   box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
 }
 
+.search-box:focus-within {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+
 .search-box input {
   width: 100%;
   border: 0;
@@ -824,6 +897,10 @@ button {
   top: 50px;
   width: 52px;
   height: 52px;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: thumbMailPulse 1.8s ease-in-out infinite;
+  }
 }
 
 .thumb-pdf {
@@ -832,6 +909,10 @@ button {
   width: 58px;
   height: 42px;
   color: var(--red);
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: thumbPdfPath 3.7s ease-in-out infinite;
+  }
 }
 
 .thumb-agent {
@@ -840,6 +921,52 @@ button {
   width: 66px;
   height: 54px;
   color: var(--blue);
+  box-shadow: 0 0 0 rgba(99, 102, 241, 0);
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: thumbAgentGlow 3.7s ease-in-out infinite;
+  }
+}
+
+/* The 3.7s path and glow cycles are a 3s motion (keyframes at 0/1.5/3s)
+   followed by a 0.7s rest on the final frame. */
+@keyframes thumbMailPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes thumbPdfPath {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0.6;
+  }
+  40.541% {
+    transform: translate(62px, -14px);
+    opacity: 1;
+  }
+  81.081%,
+  100% {
+    transform: translate(115px, 20px);
+    opacity: 1;
+  }
+}
+
+@keyframes thumbAgentGlow {
+  0% {
+    box-shadow: 0 0 0 rgba(99, 102, 241, 0);
+  }
+  40.541% {
+    box-shadow: 0 0 32px rgba(99, 102, 241, 0.28);
+  }
+  81.081%,
+  100% {
+    box-shadow: 0 0 0 rgba(99, 102, 241, 0);
+  }
 }
 
 .thumb-glow {
@@ -1046,7 +1173,7 @@ button {
   margin-bottom: 16px;
 }
 
-.sandbox-head h2 {
+.sandbox-head h1 {
   margin: 0 0 6px;
   font-size: clamp(32px, 3.2vw, 46px);
   line-height: 1;
@@ -1063,7 +1190,37 @@ button {
 .automation-canvas {
   min-height: 505px;
   user-select: none;
+}
+
+/* Only the press-and-hold targets opt out of touch panning, so the rest of
+   the canvas still scrolls the page. */
+.automation-canvas .hold-target {
   touch-action: none;
+}
+
+.hold-hit {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  pointer-events: none;
+}
+
+.hold-hit:focus-visible {
+  outline: none;
+}
+
+:is(.target-node, .legal-node):has(> .hold-hit:focus-visible) {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+
+/* .legal-flow clips its children and some nodes touch its edge. */
+.legal-node:has(> .hold-hit:focus-visible) {
+  outline-offset: -4px;
 }
 
 .flow-lines {
@@ -1083,7 +1240,10 @@ button {
   stroke-dashoffset: 32;
   stroke-linecap: round;
   stroke-width: 2;
-  animation: flowTravel 2.4s linear infinite;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: flowTravel 2.4s linear infinite;
+  }
 }
 
 .pass-path,
@@ -1205,7 +1365,6 @@ button {
     transform 180ms ease,
     box-shadow 180ms ease,
     border-color 180ms ease;
-  will-change: transform;
 }
 
 .fixed-attachment {
@@ -1213,12 +1372,16 @@ button {
   width: auto;
   min-width: 72px;
   height: 34px;
+  margin: 0;
   padding: 0 11px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 14px 34px rgba(15, 23, 42, 0.11);
   font-size: 12px;
-  animation: attachmentFloat 3.4s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: attachmentFloat 3.4s ease-in-out infinite;
+  }
 }
 
 .fixed-attachment svg {
@@ -1381,7 +1544,9 @@ button {
 }
 
 .processing-node.active .pulse-ring {
-  animation: pulse 1.2s ease-in-out infinite;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: pulse 1.2s ease-in-out infinite;
+  }
 }
 
 @keyframes pulse {
@@ -1435,7 +1600,9 @@ button {
 }
 
 .scripts-node.active .template-stack span {
-  animation: shuffle 0.75s ease-in-out infinite alternate;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: shuffle 0.75s ease-in-out infinite alternate;
+  }
 }
 
 .validation-agent {
@@ -1807,7 +1974,10 @@ button {
   stroke-dashoffset: 32;
   stroke-linecap: round;
   stroke-width: 1.5;
-  animation: flowTravel 2.6s linear infinite;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: flowTravel 2.6s linear infinite;
+  }
 }
 
 .legal-line.success {
@@ -2232,6 +2402,7 @@ button {
 }
 
 .doc-stage-tabs button {
+  position: relative;
   min-height: 34px;
   border: 1px solid var(--line);
   border-radius: 11px;
@@ -2241,10 +2412,24 @@ button {
   font-weight: 780;
 }
 
-.doc-stage-tabs button.active {
+.doc-stage-tabs [aria-selected="true"] {
   border-color: rgba(99, 77, 255, 0.28);
   background: rgba(99, 77, 255, 0.08);
   color: var(--blue);
+}
+
+/* Selection needs a shape, not only colour; the bar takes no layout space. */
+:is(.doc-stage-tabs, .clinic-tabs) [aria-selected="true"]::after,
+.case-card[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 14px 4px;
+  border-bottom: 2px solid currentColor;
+  border-radius: 2px;
+}
+
+.case-card[aria-selected="true"]::after {
+  border-bottom-color: var(--violet);
 }
 
 .doc-pipeline {
@@ -2395,7 +2580,6 @@ button {
   width: min(var(--max), calc(100% - 56px));
   margin: 0 auto;
   padding: 34px 0 86px;
-  overflow-anchor: none;
 }
 
 .clinic-head {
@@ -2476,12 +2660,24 @@ button {
   line-height: 0.96;
 }
 
-.clinic-copy > p {
+/* Same box as the single paragraph it replaces: the 1em top margin still
+   collapses with the heading's bottom margin. */
+.clinic-description {
+  display: grid;
   max-width: 520px;
-  margin-bottom: 20px;
+  margin: 1em 0 20px;
   color: var(--muted);
   font-size: clamp(16px, 1.4vw, 19px);
   line-height: 1.52;
+}
+
+.clinic-description p {
+  grid-area: 1 / 1;
+  margin: 0;
+}
+
+.clinic-description p:not(.active) {
+  visibility: hidden;
 }
 
 .clinic-tabs {
@@ -2492,6 +2688,7 @@ button {
 }
 
 .clinic-tabs button {
+  position: relative;
   min-height: 42px;
   padding: 0 16px;
   border: 1px solid var(--line);
@@ -2505,7 +2702,7 @@ button {
 }
 
 .clinic-tabs button:hover,
-.clinic-tabs button.active {
+.clinic-tabs [aria-selected="true"] {
   border-color: rgba(99, 77, 255, 0.34);
   color: var(--blue);
   box-shadow: 0 16px 44px rgba(66, 88, 255, 0.12);
@@ -2598,9 +2795,14 @@ button {
   transform-origin: 50% 70%;
 }
 
+.clinic-phone picture {
+  display: block;
+}
+
 .clinic-phone img {
   display: block;
   width: 100%;
+  height: auto;
   max-height: 455px;
   object-fit: cover;
   object-position: top;
@@ -2878,6 +3080,9 @@ button {
 
   .automation-canvas {
     min-height: 1310px;
+  }
+
+  .automation-canvas .hold-target {
     touch-action: auto;
   }
 
@@ -3339,8 +3544,11 @@ button {
   inset: -5px;
   border: 2px solid rgba(99, 77, 255, 0.5);
   border-radius: 15px;
-  animation: holdPulse 1.7s ease-out infinite;
   pointer-events: none;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: holdPulse 1.7s ease-out infinite;
+  }
 }
 
 .fixed-attachment .hold-hint {
@@ -3355,8 +3563,11 @@ button {
   font-weight: 740;
   white-space: nowrap;
   transform: translateX(-50%);
-  animation: holdHintBob 1.7s ease-in-out infinite;
   pointer-events: none;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: holdHintBob 1.7s ease-in-out infinite;
+  }
 }
 
 @keyframes holdPulse {
@@ -3527,6 +3738,7 @@ button {
 .zone-excel .case-thumb { background: rgba(15, 118, 110, 0.07); }
 
 .case-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -3545,7 +3757,7 @@ button {
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.1);
 }
 
-.case-card.active {
+.case-card[aria-selected="true"] {
   border-color: rgba(105, 92, 255, 0.55);
   box-shadow: 0 18px 44px rgba(105, 92, 255, 0.14);
 }
@@ -3689,7 +3901,23 @@ button {
 }
 
 .bbox-verify-pulse {
-  animation: bboxPulse 1.6s ease-in-out infinite;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: bboxPulse 1.6s ease-in-out infinite;
+  }
+}
+
+.verify-marker:focus-visible {
+  outline: none;
+}
+
+.verify-marker-ring {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 2.5;
+}
+
+.verify-marker:focus-visible .verify-marker-ring {
+  stroke: var(--blue);
 }
 
 @keyframes bboxPulse {
@@ -3956,6 +4184,11 @@ button {
   cursor: pointer;
 }
 
+/* .stage-card clips overflow, so keep the ring inside the header. */
+.stage-card-head:focus-visible {
+  outline-offset: -3px;
+}
+
 .stage-index {
   color: var(--muted);
   font-size: 10.5px;
@@ -4054,6 +4287,10 @@ button {
 
 .spin {
   animation: inspectorSpin 0.9s linear infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-duration: 2.4s;
+  }
 }
 
 @keyframes inspectorSpin {
@@ -4103,6 +4340,16 @@ button {
   background: rgba(105, 92, 255, 0.09);
 }
 
+.ocr-key {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: inherit;
+  cursor: inherit;
+}
+
 .ocr-value {
   flex: 1;
   min-width: 0;
@@ -4129,7 +4376,10 @@ button {
   font-size: 10px;
   font-weight: 740;
   cursor: pointer;
-  animation: bboxPulse 1.6s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: bboxPulse 1.6s ease-in-out infinite;
+  }
 }
 
 .verify-wait {

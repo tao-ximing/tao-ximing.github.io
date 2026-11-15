@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
-import App from "./main.jsx";
+import App from "./App.jsx";
+import { loadRoute, pathToSlug } from "./routes.js";
 
 const base = import.meta.env.BASE_URL;
 
@@ -13,10 +14,22 @@ if (window.location.hash.startsWith("#/")) {
   redirected = true;
 }
 
-const container = document.getElementById("root");
-if (!redirected && container.firstElementChild) {
-  hydrateRoot(container, <App />);
-} else {
-  container.innerHTML = "";
-  createRoot(container).render(<App />);
+async function mount() {
+  const slug = pathToSlug(window.location.pathname);
+  // Resolved before hydrating so the first client render matches the
+  // prerendered markup synchronously.
+  const page = await loadRoute(slug);
+  const app = <App initialSlug={slug} initialPage={page} />;
+
+  const container = document.getElementById("root");
+  if (!redirected && container.firstElementChild) {
+    hydrateRoot(container, app);
+  } else {
+    container.innerHTML = "";
+    createRoot(container).render(app);
+  }
 }
+
+mount().catch((error) => {
+  console.error("Failed to start the app.", error);
+});
