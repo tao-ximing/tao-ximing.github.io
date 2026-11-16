@@ -12,7 +12,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { usePrefersReducedMotion } from "../a11y.js";
-import MotionRoot from "../shared/MotionRoot.jsx";
+import MotionRoot, { FlightMotion } from "../shared/MotionRoot.jsx";
 import { FLIGHT_ORIGIN, flightTransition } from "../shared/motion.js";
 import { HoldHitButton, useLongPress } from "../shared/hold.jsx";
 
@@ -90,14 +90,17 @@ function LegalPipeline() {
       <div className="legal-shell">
         <div className={`legal-flow legal-step-${legalStep}`}>
           <div className="canvas-grid" />
-          {legalFlights.map((flight) => (
-            <LegalFlight
-              flight={flight}
-              key={flight.id}
-              onComplete={completeLegalFlight}
-              reduce={reduce}
-            />
-          ))}
+          <FlightMotion>
+            {legalFlights.map((flight) => (
+              <LegalFlight
+                flight={flight}
+                key={flight.id}
+                onComplete={completeLegalFlight}
+                reduce={reduce}
+              />
+            ))}
+          </FlightMotion>
+
           <LegalNode
             className="question-node"
             icon={<MessageSquare size={23} />}
