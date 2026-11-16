@@ -56,13 +56,6 @@ export function useLongPress(onHold) {
   };
 }
 
-/** Runs `action` only for clicks synthesised by the keyboard (Enter/Space). */
-export function keyboardClickOnly(action) {
-  return (event) => {
-    if (event.detail === 0) action();
-  };
-}
-
 /**
  * Keyboard and assistive-technology entry point for a press-and-hold node.
  * It covers the node but ignores the pointer, so mouse and touch keep using
